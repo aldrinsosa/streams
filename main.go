@@ -23,6 +23,17 @@ func GetWeights() ([4]float64, error) {
 	return weights, nil
 }
 
+func GetNumberClusters() (int, error) {
+	numberClusters, err := strconv.Atoi(flag.Arg(1))
+	if err != nil {
+		return 0, err
+	}
+	if numberClusters < 0 {
+		return 0, errors.New("Usage ./streams FILE [N WB WT WD WS]\n\tN should be a positive integer")
+	}
+	return numberClusters, nil
+}
+
 func main() {
 	flag.Parse()
 	countFlags := len(flag.Args())
@@ -39,11 +50,13 @@ func main() {
 		fmt.Println(fileName)
 		return
 	}
-	numberClusters, err := strconv.Atoi(flag.Arg(1))
+
+	numberClusters, err := GetNumberClusters()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	weights, err := GetWeights()
 	if err != nil {
 		fmt.Println(err)

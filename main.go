@@ -47,6 +47,9 @@ func GetNumberClusters(row string) (int, error) {
 	if err != nil {
 		return 0, errors.New("count=X // X is an positive integer")
 	}
+	if numberCluster <= 0 {
+		return 0, errors.New("count=X // X is an positive integer")
+	}
 	if splitRow[0] != "count" {
 		return 0, errors.New("count=X // X is an positive integer")
 	}
@@ -82,9 +85,7 @@ func main() {
 	//get the amount of clusters in the file
 	scanner.Scan()
 	countRow := scanner.Text()
-
 	numberClusters, err := GetNumberClusters(countRow)
-
 	if err != nil {
 		fmt.Println(err)
 		return

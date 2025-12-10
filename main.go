@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -34,10 +35,17 @@ func GetNumberClusters() (int, error) {
 	return numberClusters, nil
 }
 
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func main() {
+	//check the args
 	flag.Parse()
-	countFlags := len(flag.Args())
-	if countFlags != 1 && countFlags != 6 {
+	countArgs := len(flag.Args())
+	if countArgs != 1 && countArgs != 6 {
 		fmt.Println("Usage ./streams FILE [N WB WT WD WS]")
 		return
 	}
@@ -46,11 +54,14 @@ func main() {
 		fmt.Println("Error with the file")
 		return
 	}
-	if countFlags == 1 {
-		fmt.Println(fileName)
+
+	file, err := os.ReadFile(fileName)
+	check(err)
+
+	if countArgs == 1 {
+		fmt.Println(string(file))
 		return
 	}
-
 	numberClusters, err := GetNumberClusters()
 	if err != nil {
 		fmt.Println(err)
@@ -62,6 +73,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	println(numberClusters)
+	fmt.Println(numberClusters)
 	fmt.Println(weights)
 }

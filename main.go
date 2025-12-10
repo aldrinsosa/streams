@@ -11,8 +11,9 @@ import (
 
 func GetWeights() ([4]float64, error) {
 	var weights [4]float64
+	//transform each weights from the args
 	for i := range 4 {
-		weight, err := strconv.ParseFloat(strings.TrimSpace(flag.Arg(i+2)), 64)
+		weight, err := strconv.ParseFloat(strings.TrimSpace(flag.Arg(i+2)), 64) // +2 is for the file and the number of clusters
 		weights[i] = weight
 		if weight < 0 {
 			return weights, errors.New("Heights can't be negative")
@@ -25,7 +26,7 @@ func GetWeights() ([4]float64, error) {
 }
 
 func GetNumberClusters() (int, error) {
-	numberClusters, err := strconv.Atoi(flag.Arg(1))
+	numberClusters, err := strconv.Atoi(flag.Arg(1)) // 1 is to avoid the file
 	if err != nil {
 		return 0, err
 	}
@@ -33,12 +34,6 @@ func GetNumberClusters() (int, error) {
 		return 0, errors.New("Usage ./streams FILE [N WB WT WD WS]\n\tN should be a positive integer")
 	}
 	return numberClusters, nil
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
 
 func main() {
@@ -49,25 +44,34 @@ func main() {
 		fmt.Println("Usage ./streams FILE [N WB WT WD WS]")
 		return
 	}
+	//get the file name from the args
 	fileName := flag.Arg(0)
 	if fileName == "" {
 		fmt.Println("Error with the file")
 		return
 	}
 
+	//open the file
 	file, err := os.ReadFile(fileName)
-	check(err)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
+	//when there's no weights
 	if countArgs == 1 {
 		fmt.Println(string(file))
 		return
 	}
+
+	//obtain the desire amount of clusters
 	numberClusters, err := GetNumberClusters()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
+	//get the weights from the args
 	weights, err := GetWeights()
 	if err != nil {
 		fmt.Println(err)

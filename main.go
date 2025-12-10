@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -25,7 +26,7 @@ func GetWeights() ([4]float64, error) {
 	return weights, nil
 }
 
-func GetNumberClusters() (int, error) {
+func GetGoalClusters() (int, error) {
 	numberClusters, err := strconv.Atoi(flag.Arg(1)) // 1 is to avoid the file
 	if err != nil {
 		return 0, err
@@ -52,20 +53,40 @@ func main() {
 	}
 
 	//open the file
-	file, err := os.ReadFile(fileName)
+	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	scanner.Scan()
+	countRow := scanner.Text()
+
+	var rowsFile []string
+
+	for scanner.Scan() {
+		rowsFile = append(rowsFile, scanner.Text())
+	}
+
+	if err = scanner.Err(); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	//get the amount of clusters in the file
 
 	//when there's no weights
 	if countArgs == 1 {
-		fmt.Println(string(file))
+		fmt.Println(countRow)
+		fmt.Println(rowsFile)
 		return
 	}
 
 	//obtain the desire amount of clusters
-	numberClusters, err := GetNumberClusters()
+	goalClusters, err := GetGoalClusters()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -77,6 +98,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(numberClusters)
+	fmt.Println(goalClusters)
 	fmt.Println(weights)
 }

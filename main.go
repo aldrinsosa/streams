@@ -21,6 +21,10 @@ type stream struct {
 	avgInterarrivalTime float64
 }
 
+type cluster struct {
+	items []stream
+}
+
 const (
 	Id = iota
 	SrcIp
@@ -162,6 +166,14 @@ func GetStreams(rows []string, streams *[]stream, numberClusters int) error {
 	return nil
 }
 
+func InitClusters(clusters *[]cluster, streams []stream, numberClusters int) {
+	for i := range numberClusters {
+		var cluster cluster
+		cluster.items = append(cluster.items, streams[i])
+		*clusters = append(*clusters, cluster)
+	}
+}
+
 func main() {
 	//check the args
 	flag.Parse()
@@ -196,7 +208,7 @@ func main() {
 		return
 	}
 
-	//get each stream
+	//get the content from the file
 	var rowsFile []string
 	for scanner.Scan() {
 		rowsFile = append(rowsFile, scanner.Text())
@@ -206,13 +218,18 @@ func main() {
 		return
 	}
 
+	//get each stream
 	var streams []stream
-
 	err = GetStreams(rowsFile, &streams, numberClusters)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	//init clusters
+	var clusters []cluster
+	InitClusters(&clusters, streams, numberClusters)
+
 	//when there's no weights
 	if countArgs == 1 {
 		fmt.Println(numberClusters)

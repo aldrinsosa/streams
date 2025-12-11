@@ -31,6 +31,13 @@ const (
 	Time
 )
 
+const (
+	Wb = iota // weight for total_bytes
+	Wt        // weight for flow_duration
+	Wd        // weight for avg_interarrival_time
+	Ws        // weight for průměrnou délku paketu
+)
+
 func GetWeights() ([4]float64, error) {
 	var weights [4]float64
 	//transform each weights from the args
@@ -90,6 +97,24 @@ func GetSplitStream(stream string) ([]string, error) {
 	return splitRow, nil
 }
 
+func CheckIp(ip string) error {
+	lenIp := 4
+	ipSplit := strings.Split(ip, ".")
+	if len(ipSplit) != lenIp {
+		return errors.New("The ip is incorrect")
+	}
+	for i := range lenIp {
+		ipNumber, err := strconv.Atoi(ipSplit[i])
+		if err != nil {
+			return err
+		}
+		if ipNumber < 0 || ipNumber > 255 {
+			return errors.New("The ip is incorrect")
+		}
+	}
+	return nil
+}
+
 func GetStreams(rows []string, streams *[]stream, numberClusters int) error {
 	for i := range numberClusters {
 		var stream stream
@@ -102,8 +127,15 @@ func GetStreams(rows []string, streams *[]stream, numberClusters int) error {
 			return err
 		}
 		stream.streamId = streamId
-		// TODO:check ips
+		err = CheckIp(splitRow[SrcIp])
+		if err != nil {
+			return err
+		}
 		stream.srcIp = splitRow[SrcIp]
+		err = CheckIp(splitRow[DstIp])
+		if err != nil {
+			return err
+		}
 		stream.dstIp = splitRow[DstIp]
 		totalBytes, err := strconv.Atoi(splitRow[Bytes])
 		if err != nil {

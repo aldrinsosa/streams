@@ -21,6 +21,16 @@ type stream struct {
 	avgInterarrivalTime float64
 }
 
+const (
+	Id = iota
+	SrcIp
+	DstIp
+	Bytes
+	Duration
+	Packet
+	Time
+)
+
 func GetWeights() ([4]float64, error) {
 	var weights [4]float64
 	//transform each weights from the args
@@ -68,14 +78,14 @@ func GetNumberClusters(row string) (int, error) {
 	return numberCluster, nil
 }
 
-func GetSplitStream(flow string) ([]string, error) {
+func GetSplitStream(stream string) ([]string, error) {
 	f := func(c rune) bool {
 		return unicode.IsSpace(c)
 	}
-	splitRow := strings.FieldsFunc(flow, f)
+	splitRow := strings.FieldsFunc(stream, f)
 	lenSplit := len(splitRow)
 	if lenSplit != 7 {
-		return splitRow, errors.New("//each row in the file should be like this\n\tFLOWID SRC_IP DST_IP TOTAL_BYTES FLOW_DURATION PACKET_COUNT AVG_INTERARRIVAL ")
+		return splitRow, errors.New("//each row in the file should be like this\n\tSTREAMID SRC_IP DST_IP TOTAL_BYTES STREAM_DURATION PACKET_COUNT AVG_INTERARRIVAL ")
 	}
 	return splitRow, nil
 }
@@ -87,11 +97,34 @@ func GetStreams(rows []string, streams *[]stream, numberClusters int) error {
 		if err != nil {
 			return err
 		}
-		streamId, err := strconv.Atoi(splitRow[0])
+		streamId, err := strconv.Atoi(splitRow[Id])
 		if err != nil {
 			return err
 		}
 		stream.streamId = streamId
+		// TODO:check ips
+		stream.srcIp = splitRow[SrcIp]
+		stream.dstIp = splitRow[DstIp]
+		totalBytes, err := strconv.Atoi(splitRow[Bytes])
+		if err != nil {
+			return err
+		}
+		stream.totalBytes = totalBytes
+		streamDuration, err := strconv.ParseFloat(strings.TrimSpace(splitRow[Duration]), 64)
+		if err != nil {
+			return err
+		}
+		stream.streamDuration = streamDuration
+		packetCount, err := strconv.Atoi(splitRow[Packet])
+		if err != nil {
+			return err
+		}
+		stream.packetCount = packetCount
+		avgInterarrivalTime, err := strconv.ParseFloat(strings.TrimSpace(splitRow[Time]), 64)
+		if err != nil {
+			return err
+		}
+		stream.avgInterarrivalTime = avgInterarrivalTime
 		*streams = append(*streams, stream)
 	}
 	return nil
@@ -131,7 +164,7 @@ func main() {
 		return
 	}
 
-	//get each flow
+	//get each stream
 	var rowsFile []string
 	for scanner.Scan() {
 		rowsFile = append(rowsFile, scanner.Text())
@@ -148,7 +181,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
 	//when there's no weights
 	if countArgs == 1 {
 		fmt.Println(numberClusters)

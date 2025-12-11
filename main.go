@@ -174,6 +174,17 @@ func InitClusters(clusters *[]cluster, streams []stream, numberClusters int) {
 	}
 }
 
+func PrintClusters(clusters []cluster, numberClusters int) {
+	fmt.Println("Clusters:")
+	for i := range numberClusters {
+		fmt.Printf("cluster %d:", i)
+		for j := range len(clusters[i].items) {
+			fmt.Printf(" %d", clusters[i].items[j].streamId)
+		}
+		fmt.Printf("\n")
+	}
+}
+
 func main() {
 	//check the args
 	flag.Parse()
@@ -232,8 +243,8 @@ func main() {
 
 	//when there's no weights
 	if countArgs == 1 {
-		fmt.Println(numberClusters)
-		fmt.Println(rowsFile)
+		// TODO:sort clusters
+		PrintClusters(clusters, numberClusters)
 		return
 	}
 

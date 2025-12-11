@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -185,6 +186,23 @@ func PrintClusters(clusters []cluster, numberClusters int) {
 	}
 }
 
+func GetAvgLengthPacket(packetCount int, totalBytes int) float64 {
+	return float64(totalBytes) / float64(packetCount)
+}
+
+func DistanceStreams(weights []float64, firstStream stream, secondStream stream) float64 {
+	var sum float64
+	var result float64
+	firstAvgLengthPacket := GetAvgLengthPacket(firstStream.packetCount, firstStream.totalBytes)
+	secondAvgLengthPacket := GetAvgLengthPacket(secondStream.packetCount, secondStream.totalBytes)
+	sum += weights[Wb] * math.Pow((float64(firstStream.totalBytes)-float64(secondStream.totalBytes)), 2)
+	sum += weights[Wt] * math.Pow((float64(firstStream.streamDuration)-float64(secondStream.streamDuration)), 2)
+	sum += weights[Wd] * math.Pow((float64(firstStream.avgInterarrivalTime)-float64(secondStream.avgInterarrivalTime)), 2)
+	sum += weights[Ws] * math.Pow((firstAvgLengthPacket-secondAvgLengthPacket), 2)
+	result = math.Sqrt(sum)
+	return result
+}
+
 func main() {
 	//check the args
 	flag.Parse()
@@ -261,6 +279,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	PrintClusters(clusters, numberClusters)
 	fmt.Println(goalClusters)
 	fmt.Println(weights)
 }

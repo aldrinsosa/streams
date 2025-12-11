@@ -8,7 +8,18 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 )
+
+type stream struct {
+	streamId            int
+	srcIp               string
+	dstIp               string
+	totalBytes          int
+	streamDuration      float64
+	packetCount         int
+	avgInterarrivalTime float64
+}
 
 func GetWeights() ([4]float64, error) {
 	var weights [4]float64
@@ -57,6 +68,35 @@ func GetNumberClusters(row string) (int, error) {
 	return numberCluster, nil
 }
 
+func GetSplitStream(flow string) ([]string, error) {
+	f := func(c rune) bool {
+		return unicode.IsSpace(c)
+	}
+	splitRow := strings.FieldsFunc(flow, f)
+	lenSplit := len(splitRow)
+	if lenSplit != 7 {
+		return splitRow, errors.New("//each row in the file should be like this\n\tFLOWID SRC_IP DST_IP TOTAL_BYTES FLOW_DURATION PACKET_COUNT AVG_INTERARRIVAL ")
+	}
+	return splitRow, nil
+}
+
+func GetStreams(rows []string, streams *[]stream, numberClusters int) error {
+	for i := range numberClusters {
+		var stream stream
+		splitRow, err := GetSplitStream(rows[i])
+		if err != nil {
+			return err
+		}
+		streamId, err := strconv.Atoi(splitRow[0])
+		if err != nil {
+			return err
+		}
+		stream.streamId = streamId
+		*streams = append(*streams, stream)
+	}
+	return nil
+}
+
 func main() {
 	//check the args
 	flag.Parse()
@@ -91,20 +131,26 @@ func main() {
 		return
 	}
 
+	//get each flow
 	var rowsFile []string
-
 	for scanner.Scan() {
 		rowsFile = append(rowsFile, scanner.Text())
 	}
-
 	if err = scanner.Err(); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var streams []stream
+
+	err = GetStreams(rowsFile, &streams, numberClusters)
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	//when there's no weights
 	if countArgs == 1 {
-		fmt.Println(countRow)
 		fmt.Println(numberClusters)
 		fmt.Println(rowsFile)
 		return
